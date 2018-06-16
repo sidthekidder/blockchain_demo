@@ -9,6 +9,7 @@ import (
 	"math/big"
 	"math"
 	"fmt"
+	"encoding/gob"
 )
 
 const targetBits = 20
@@ -37,6 +38,23 @@ func NewBlock(data string, prevBlockHash []byte) *Block {
 	return block
 }
 
+func (b *Block) Serialize() []byte {
+	var result bytes.Buffer
+	encoder := gob.NewEncoder(&result)
+
+	encoder.Encode(b)
+	return result.Bytes()
+}
+
+func DeserializeBlock(d []byte) *Block {
+	var b Block
+
+	decoder := gob.NewDecoder(bytes.NewReader(d))
+
+	decoder.Decode(&b)
+	return &b
+}
+
 func NewProofOfWork(b *Block) *ProofOfWork {
 	target := big.NewInt(1)
 	target.Lsh(target, uint(256 - targetBits))
@@ -57,7 +75,6 @@ func (pow *ProofOfWork) Run() (int, []byte) {
 		count += 1
 		if count == 200 {
 			fmt.Printf("Tried %d hashes", count)
-			fmt.Printf("TRYING HASH!! %x\n", hashInt)
 		}
 		data := bytes.Join(
 				[][]byte{
